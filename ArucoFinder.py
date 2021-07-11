@@ -39,9 +39,10 @@ class ArucoFinder:
                                      value=ArucoFinder.WHITE)
             cv2.aruco.drawDetectedMarkers(img, corners, ids)
 
-            ids = sorted(np.array(ids).flatten())
+            ids = np.array(ids).flatten()
             corners = np.array(corners).flatten().reshape((markers, 4, 2))
             markersDict = dict(zip(ids, corners))
+            ids.sort()
             for id in ids:
                 center = ArucoFinder.center(markersDict[id])
                 cv2.putText(img, "Id: {}; Pos: x:{} ; y:{}".format(id, center[0], center[1]),
