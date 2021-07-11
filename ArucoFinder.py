@@ -31,10 +31,6 @@ class ArucoFinder:
         dx, dy = p1[0] - p2[0], p1[1] - p2[1]
         return dx, dy, math.sqrt(dx ** 2 + dy ** 2)
 
-    @staticmethod
-    def extractNP(lst):
-        return list(map(lambda x: x[0] if type(x) == np.ndarray else x, lst))
-
     def visualise(self, img, corners, ids):
         markers = len(corners)
         if markers > 0:
@@ -43,8 +39,8 @@ class ArucoFinder:
                                      value=ArucoFinder.WHITE)
             cv2.aruco.drawDetectedMarkers(img, corners, ids)
 
-            ids = sorted(ArucoFinder.extractNP(ids))
-            corners = ArucoFinder.extractNP(corners)
+            ids = sorted(np.array(ids).flatten())
+            corners = np.array(corners).flatten().reshape((markers, 4, 2))
             markersDict = dict(zip(ids, corners))
             for id in ids:
                 center = ArucoFinder.center(markersDict[id])
