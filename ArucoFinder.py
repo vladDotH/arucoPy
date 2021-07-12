@@ -34,9 +34,9 @@ class ArucoFinder:
     def visualise(self, img, corners, ids):
         markers = len(corners)
         if markers > 0:
-            p = [0, img.shape[0] + ArucoFinder.SPAN]
-            img = cv2.copyMakeBorder(img, 0, (markers + 1 + 1 * (markers == 2)) * ArucoFinder.SPAN, 0, 0, cv2.BORDER_CONSTANT,
-                                     value=ArucoFinder.WHITE)
+            y = img.shape[0] + ArucoFinder.SPAN
+            img = cv2.copyMakeBorder(img, 0, (markers + 1 + 1 * (markers == 2)) * ArucoFinder.SPAN,
+                                     0, 0, cv2.BORDER_CONSTANT, value=ArucoFinder.WHITE)
             cv2.aruco.drawDetectedMarkers(img, corners, ids)
 
             ids = np.array(ids).flatten()
@@ -46,14 +46,14 @@ class ArucoFinder:
             for id in ids:
                 center = ArucoFinder.center(markersDict[id])
                 cv2.putText(img, "Id: {}; Pos: x:{} ; y:{}".format(id, center[0], center[1]),
-                            p, ArucoFinder.FONT, ArucoFinder.TEXT_SCALE, ArucoFinder.BLACK)
-                p[1] += ArucoFinder.SPAN
+                            (0, y), ArucoFinder.FONT, ArucoFinder.TEXT_SCALE, ArucoFinder.BLACK)
+                y += ArucoFinder.SPAN
 
             if markers == 2:
                 c1, c2 = list(map(ArucoFinder.center, markersDict.values()))
                 cv2.line(img, c1, c2, ArucoFinder.RED, 2)
                 dx, dy, d = ArucoFinder.dist(c1, c2)
                 cv2.putText(img, "Distance between {} and {} : {}, dx:{}, dy:{}".format(ids[0], ids[1], round(d, 3), dx, dy),
-                            p, ArucoFinder.FONT, ArucoFinder.TEXT_SCALE, ArucoFinder.BLACK)
+                            (0, y), ArucoFinder.FONT, ArucoFinder.TEXT_SCALE, ArucoFinder.BLACK)
 
         return img
