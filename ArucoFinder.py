@@ -1,59 +1,53 @@
 import cv2
-import math
+from cv2 import aruco
 import numpy as np
+from Settings import *
 
 
 class ArucoFinder:
-    SPAN = 30
-    FONT = cv2.FONT_HERSHEY_SIMPLEX
-    BLACK = (0, 0, 0)
-    WHITE = (0xff, 0xff, 0xff)
-    RED = (0, 0, 0xff)
-    TEXT_SCALE = 0.5
-
     def __init__(self,
-                 dict=cv2.aruco.Dictionary_get(cv2.aruco.DICT_6X6_1000),
-                 params=cv2.aruco.DetectorParameters_create()):
+                 dict=aruco.Dictionary_get(aruco.DICT_6X6_1000),
+                 params=aruco.DetectorParameters_create()):
         self.dict = dict
         self.params = params
 
     def find(self, img):
-        corners, ids, rejected = cv2.aruco.detectMarkers(img, self.dict, parameters=self.params)
+        corners, ids, rejected = aruco.detectMarkers(img, self.dict, parameters=self.params)
         return corners, ids
 
     @staticmethod
     def center(marker):
-        p1, p2 = marker[0], marker[2]
+        p1, p2 = marker[0][0], marker[0][2]
         return int(p1[0] + p2[0]) // 2, int(p1[1] + p2[1]) // 2
 
     @staticmethod
-    def dist(p1, p2):
-        dx, dy = p1[0] - p2[0], p1[1] - p2[1]
-        return dx, dy, math.sqrt(dx ** 2 + dy ** 2)
+    def dist(m1, m2):
+        return np.linalg.norm(m1 - m2)
 
-    def visualise(self, img, corners, ids):
+    def visualise(self, img, corners, ids, camMat, distCoeffs, markerLen):
         markers = len(corners)
         if markers > 0:
-            p = [0, img.shape[0] + ArucoFinder.SPAN]
-            img = cv2.copyMakeBorder(img, 0, (markers + 1 + 1 * (markers == 2)) * ArucoFinder.SPAN, 0, 0, cv2.BORDER_CONSTANT,
-                                     value=ArucoFinder.WHITE)
-            cv2.aruco.drawDetectedMarkers(img, corners, ids)
+            p = [0, img.shape[0] + SPAN]
+            img = cv2.copyMakeBorder(img, 0, (markers + 1 + 1 * (markers == 2)) * SPAN, 0, 0, cv2.BORDER_CONSTANT, value=WHITE)
+            aruco.drawDetectedMarkers(img, corners, ids)
 
             ids = np.array(ids).flatten()
-            corners = np.array(corners).flatten().reshape((markers, 4, 2))
             markersDict = dict(zip(ids, corners))
+            coords = []
             ids.sort()
             for id in ids:
-                center = ArucoFinder.center(markersDict[id])
-                cv2.putText(img, "Id: {}; Pos: x:{} ; y:{}".format(id, center[0], center[1]),
-                            p, ArucoFinder.FONT, ArucoFinder.TEXT_SCALE, ArucoFinder.BLACK)
-                p[1] += ArucoFinder.SPAN
+                rvec, tvec, objPoints = aruco.estimatePoseSingleMarkers(markersDict[id], markerLen, camMat, distCoeffs)
+                tvec = np.array(tvec).flatten()
+                coords.append(tvec)
+                cv2.putText(img, "Id: {}; Pos: x:{} ; y:{} ; z:{}".format(id, *np.round(tvec, PRECISION)),
+                            p, FONT, TEXT_SCALE, BLACK)
+                p[1] += SPAN
 
             if markers == 2:
-                c1, c2 = list(map(ArucoFinder.center, markersDict.values()))
-                cv2.line(img, c1, c2, ArucoFinder.RED, 2)
-                dx, dy, d = ArucoFinder.dist(c1, c2)
-                cv2.putText(img, "Distance between {} and {} : {}, dx:{}, dy:{}".format(ids[0], ids[1], round(d, 3), dx, dy),
-                            p, ArucoFinder.FONT, ArucoFinder.TEXT_SCALE, ArucoFinder.BLACK)
+                cv2.line(img, *list(map(ArucoFinder.center, corners)), RED, 2)
+                cv2.putText(img,
+                            "Distance between {} and {} : {} meters"
+                            .format(ids[0], ids[1], np.round(ArucoFinder.dist(*coords), PRECISION)),
+                            p, FONT, TEXT_SCALE, BLACK)
 
         return img
