@@ -39,6 +39,7 @@ while key != ESC:
     cv2.imshow(CAM, img)
     key = cv2.waitKey(TIME_DELAY)
 
+cap.release()
 cv2.destroyAllWindows()
 
 if image_size is None:
