@@ -27,7 +27,7 @@ class ArucoFinder:
     def visualise(self, img, corners, ids, camMat, distCoeffs, markerLen):
         markers = len(corners)
         if markers > 0:
-            p = [0, img.shape[0] + SPAN]
+            y = img.shape[0] + SPAN
             img = cv2.copyMakeBorder(img, 0, (markers + 1 + 1 * (markers == 2)) * SPAN, 0, 0, cv2.BORDER_CONSTANT, value=WHITE)
             aruco.drawDetectedMarkers(img, corners, ids)
 
@@ -40,14 +40,14 @@ class ArucoFinder:
                 tvec = np.array(tvec).flatten()
                 coords.append(tvec)
                 cv2.putText(img, "Id: {}; Pos: x:{} ; y:{} ; z:{}".format(id, *np.round(tvec, PRECISION)),
-                            p, FONT, TEXT_SCALE, BLACK)
-                p[1] += SPAN
+                            (0, y), FONT, TEXT_SCALE, BLACK)
+                y += SPAN
 
             if markers == 2:
                 cv2.line(img, *list(map(ArucoFinder.center, corners)), RED, 2)
                 cv2.putText(img,
                             "Distance between {} and {} : {} meters"
                             .format(ids[0], ids[1], np.round(ArucoFinder.dist(*coords), PRECISION)),
-                            p, FONT, TEXT_SCALE, BLACK)
+                            (0, y), FONT, TEXT_SCALE, BLACK)
 
         return img
